@@ -1,11 +1,16 @@
 import os
 
+import ujson
 
 INPUT = "./input"
+OUTPUT = "./output"
+
 TARGET = "./luatable.txt"
-LANG_PATH = "./avg_lang.json"
-CONFIG_PATH = "./avg_config.json"
-OUTPUT = "./output/lua2json.json"
+TARGET_OUTPUT = "./output/lua2json.json"
+
+LUA_PATH = "./a_lua"
+JSON_PATH = "./b_json"
+WIKI_PATH = "./c_wiki"
 
 
 def lua2json(string):
@@ -27,6 +32,8 @@ def lua2json(string):
             count -= 1
         elif text[count] == "=":
             text = text[:count] + "\":" + text[count+1:]
+        elif text[count] == ";":
+            text = text[:count] + ",\"" + text[count+1:]
 
         count += 1
 
@@ -35,7 +42,7 @@ def lua2json(string):
     count = 0
     quote_sign = -1
     while count < len(text) - 1:
-        print(count, quote_sign, text[count - 1], text[count - 0], text[count + 1])
+        # print(count, quote_sign, text[count - 1], text[count - 0], text[count + 1])
         if text[count] == "\"":
             quote_sign *= -1
 
@@ -43,9 +50,9 @@ def lua2json(string):
             count += 1
             continue
 
-        if text[count] == "{" and text[count + 1] != "{" and text[count + 1] != "\"" and not text[count + 1].isdigit():
+        if text[count] == "{" and text[count + 1] not in ["{", "\"", "-"] and not text[count + 1].isdigit():
             text = text[:count+1] + "\"" + text[count+1:]
-        elif text[count] == "," and text[count + 1] != "{" and text[count + 1] != "\"" and not text[count + 1].isdigit():
+        elif text[count] == "," and text[count + 1] not in ["{", "\"", "-"] and not text[count + 1].isdigit():
             text = text[:count+1] + "\"" + text[count+1:]
 
         count += 1
@@ -113,32 +120,22 @@ def convert():
 
     print(dict_string)
 
-    with open(OUTPUT, "w", encoding="utf-8") as f_output:
+    with open(TARGET_OUTPUT, "w", encoding="utf-8") as f_output:
         f_output.write(dict_string)
 
+    return
 
-def recognize():
-    for file_name in os.listdir(INPUT):
+
+def recognize_all():
+    for file_name in os.listdir(LUA_PATH):
         print(file_name)
-        if file_name.split(".")[2].startswith("AvgLang"):
-            with open(os.path.join(INPUT, file_name), "r", encoding="utf-8") as f:
-                string = recognize_lua_table(f.read())
-                f.close()
+        with open(os.path.join(LUA_PATH, file_name), "r", encoding="utf-8") as f_input:
+            string = recognize_lua_table(f_input.read())
+            f_input.close()
 
-            with open(LANG_PATH, "w", encoding="utf-8") as f_output:
-                f_output.write(lua2json(string))
-                f_output.close()
-
-        elif file_name.split(".")[2].startswith("AvgCfg"):
-            with open(os.path.join(INPUT, file_name), "r", encoding="utf-8") as f:
-                string = recognize_lua_table(f.read())
-                f.close()
-
-            with open(CONFIG_PATH, "w", encoding="utf-8") as f_output:
-                f_output.write(lua2json(string))
-                f_output.close()
-
-    print("finished")
+        with open(os.path.join(JSON_PATH, file_name.replace(".lua", ".json")), "w", encoding="utf-8") as f_output:
+            f_output.write(lua2json(string))
+            f_output.close()
     return
 
 
@@ -149,19 +146,34 @@ def recognize_lua_table(string):
     return end_return
 
 
-def main():
-    mode = input("-- 请选择执行的模式：【1：复制转换】【2：自动识别】\n"
-                 "   1.复制转换：请将local x = y 中的 y 字符串复制到 ./luatable.txt \n"
-                 "   2.自动识别：请将对应剧情的 AvgLang 文件和 AvgCfg 文件粘贴到 ./input 文件夹下\n")
-    if mode == "1":
-        convert()
-    elif mode == "2":
-        recognize()
-    else:
-        print("-- 无法识别")
-        main()
-
+def check():
+    for file_name in os.listdir(JSON_PATH):
+        try:
+            with open(os.path.join(JSON_PATH, file_name), "r", encoding="utf-8") as f:
+                string = ujson.load(f)
+        except:
+            print(f"{file_name} is not a json file")
     return
+
+
+def main():
+    while True:
+        mode = input("-- 请选择执行的模式：【1：复制转换】【2：自动识别】【3：检查JSON】【4：模式说明】【5：退出】\n")
+        if mode == "1":
+            convert()
+        elif mode == "2":
+            recognize_all()
+        elif mode == "3":
+            check()
+        elif mode == "4":
+            print("   1.复制转换：请将local x = y 中的 y 字符串复制到 ./luatable.txt \n"
+                  "   2.自动识别：请将对应剧情的 AvgLang 文件和 AvgCfg 文件粘贴到 ./input 文件夹下\n")
+            main()
+        elif mode == "5":
+            return
+        else:
+            print("-- 无法识别")
+            main()
 
 
 if __name__ == '__main__':
