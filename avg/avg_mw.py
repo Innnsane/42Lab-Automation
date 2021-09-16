@@ -1,10 +1,11 @@
 import re
 import ujson
+from lua2json import recognize
 
 NAME_PATH = "./res/avg_name.txt"
 TEXT_PATH = "./res/local_text.txt"
-CONFIG_PATH = "./avg_config.txt"
-LANG_PATH = "./avg_lang.txt"
+CONFIG_PATH = "./avg_config.json"
+LANG_PATH = "./avg_lang.json"
 OUTPUT_PATH = "./output/output.txt"
 
 
@@ -109,7 +110,7 @@ def create_mw(config, lang):
     return mw_text
 
 
-def main():
+def get():
     with open(LANG_PATH, "r", encoding="utf-8") as f_lang:
         lang = ujson.load(f_lang)
         f_lang.close()
@@ -126,6 +127,21 @@ def main():
         f_output.write(mw_text)
 
     return
+
+
+def main():
+    while True:
+        mode = input("-- 请选择需要执行的程序 【1：源文件处理】【2：WIKI剧情文本创建】【3：退出】")
+
+        if mode == "1":
+            recognize()
+        elif mode == "2":
+            get()
+        elif mode == "3":
+            break
+        else:
+            print("-- 无法识别")
+            main()
 
 
 if __name__ == '__main__':
