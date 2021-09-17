@@ -26,18 +26,21 @@ def create_mw(config, lang):
 
     # 该文件调用图片的预处理
     img_dict = {"background": {}, "character": {}}
-    for img in config['[1]']["images"]:
-        if int(img["imgType"]) == 3:
-            img_dict["character"][str(img["imgId"])] = img
-        else:
-            img_dict["background"][str(img["imgId"])] = img
+    if "images" in config['[1]'].keys():
+        for img in config['[1]']["images"]:
+            if int(img["imgType"]) == 3:
+                img_dict["character"][str(img["imgId"])] = img
+            else:
+                img_dict["background"][str(img["imgId"])] = img
 
     # 上次图片配置
     last_img_path = ""
 
     # 单元化
     for scene in config:
-        # print(config[scene])
+        # 诡异的没加大括号
+        if scene.find("[") == -1:
+            continue
 
         # 背景CG
         if "imgTween" in config[scene].keys():

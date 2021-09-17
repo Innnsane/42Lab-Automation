@@ -20,7 +20,10 @@ def lua2json(string):
     count = 0
     quote_sign = -1
     while count < len(text):
-        if text[count] == "\"":
+        # print(count, quote_sign, text[count - 1], text[count - 0], text[count + 1])
+        if text[count] == "\\" and text[count+1] == "\"":
+            count += 1
+        elif text[count] == "\"":
             quote_sign *= -1
 
         if quote_sign == 1:
@@ -33,7 +36,21 @@ def lua2json(string):
         elif text[count] == "=":
             text = text[:count] + "\":" + text[count+1:]
         elif text[count] == ";":
-            text = text[:count] + ",\"" + text[count+1:]
+            text = text[:count] + ",{\"" + text[count+1:]
+            count += 2
+
+            # ; 的处理 外加 {}
+            stake = 0
+            count_2 = count
+            while count_2 < len(text) - 1:
+                if text[count_2] == "{" or text[count_2] == "[":
+                    stake += 1
+                elif (text[count_2] == "}" or text[count_2] == "]") and stake >= 1:
+                    stake -= 1
+                if stake == 0 and (text[count:count_2].find("{") >= 0 or text[count:count_2].find("[") >= 0):
+                    text = text[:count_2 + 1] + "}" + text[count_2 + 2:]
+                    break
+                count_2 += 1
 
         count += 1
 
@@ -43,6 +60,8 @@ def lua2json(string):
     quote_sign = -1
     while count < len(text) - 1:
         # print(count, quote_sign, text[count - 1], text[count - 0], text[count + 1])
+        if text[count] == "\\" and text[count+1] == "\"":
+            quote_sign *= -1
         if text[count] == "\"":
             quote_sign *= -1
 
@@ -82,6 +101,8 @@ def lua2json(string):
     count = 0
     quote_sign = -1
     while count < len(text) - 1:
+        if text[count] == "\\" and text[count+1] == "\"":
+            count += 1
         if text[count] == "\"":
             quote_sign *= -1
 
@@ -151,14 +172,15 @@ def check():
         try:
             with open(os.path.join(JSON_PATH, file_name), "r", encoding="utf-8") as f:
                 string = ujson.load(f)
+            print(f"√ {file_name}")
         except:
-            print(f"{file_name} is not a json file")
+            print(f"× {file_name}")
     return
 
 
 def main():
     while True:
-        mode = input("-- 请选择执行的模式：【1：复制转换】【2：自动识别】【3：检查JSON】【4：模式说明】【5：退出】\n")
+        mode = input("\n-- 请选择执行的模式：【1：复制转换】【2：自动识别】【3：检查JSON】【4：模式说明】【5：退出】\n")
         if mode == "1":
             convert()
         elif mode == "2":
